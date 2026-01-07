@@ -1,12 +1,12 @@
 import * as cheerio from 'cheerio';
 import type { NormalizedInput, BrokerResult, BrokerRegistryEntry } from '../types/index.js';
-import { BaseBroker } from './base.js';
+import { BrowserBaseBroker } from './browser-base.js';
 
 /**
  * YellowPages broker integration
- * Searches yellowpages.com for public listings
+ * Searches yellowpages.com for public listings using headless browser
  */
-export class YellowPagesBroker extends BaseBroker {
+export class YellowPagesBroker extends BrowserBaseBroker {
   constructor(config: BrokerRegistryEntry) {
     super(config);
   }
@@ -33,12 +33,21 @@ export class YellowPagesBroker extends BaseBroker {
   protected parseResponse(html: string, _input: NormalizedInput): BrokerResult {
     const $ = cheerio.load(html);
     
-    const results = $('.result, .organic, .info-section');
+    const results = $('.result, .organic, .info-section, .srp-listing');
     
     if (results.length === 0) {
       const noResults = $('.no-results, .not-found').length > 0;
-      if (noResults || html.includes('No results')) {
+      if (noResults || html.includes('No results') || html.includes('0 results')) {
         return this.createNotFoundResult();
+      }
+      
+      // Check if we got blocked or hit a captcha
+      if (html.includes('captcha') || html.includes('robot') || html.includes('blocked')) {
+        return {
+          ...this.createNotFoundResult(),
+          error: 'Request blocked by site protection',
+          notes: 'Site may be blocking automated requests',
+        };
       }
       
       return {
@@ -49,11 +58,11 @@ export class YellowPagesBroker extends BaseBroker {
 
     const exposedFields: string[] = [];
     
-    if ($('.street-address, .address').length > 0) {
+    if ($('.street-address, .address, .adr').length > 0 || html.includes('address')) {
       exposedFields.push('address');
     }
     
-    if ($('.phone, .primary-phone').length > 0) {
+    if ($('.phone, .primary-phone, .tel').length > 0 || html.includes('phone')) {
       exposedFields.push('phone');
     }
     
@@ -61,4 +70,3 @@ export class YellowPagesBroker extends BaseBroker {
     return this.createFoundResult(exposedFields, undefined, 'Limited personal information - primarily business directory');
   }
 }
-

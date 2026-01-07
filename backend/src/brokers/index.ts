@@ -2,16 +2,20 @@ import type { NormalizedInput, BrokerResult, BrokerRegistry, BrokerRegistryEntry
 import { RadarisBroker } from './radaris.js';
 import { SpokeoBroker } from './spokeo.js';
 import { YellowPagesBroker } from './yellowpages.js';
-import { BaseBroker } from './base.js';
+import { BrowserBaseBroker } from './browser-base.js';
+import { browserManager } from './browser-manager.js';
 
 // Import the broker registry
 import registry from '../brokers.registry.json' with { type: 'json' };
+
+// Re-export browser manager for cleanup
+export { browserManager };
 
 /**
  * Map of broker IDs to their implementation classes
  * Only includes brokers that have been tested and verified to work
  */
-const brokerImplementations: Record<string, new (config: BrokerRegistryEntry) => BaseBroker> = {
+const brokerImplementations: Record<string, new (config: BrokerRegistryEntry) => BrowserBaseBroker> = {
   radaris: RadarisBroker,
   spokeo: SpokeoBroker,
   yellowpages: YellowPagesBroker,

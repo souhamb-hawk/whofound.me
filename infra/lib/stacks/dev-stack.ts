@@ -38,16 +38,16 @@ export class DevStack extends cdk.Stack {
     });
 
     // ============================================
-    // Lambda Function for Search API
+    // Lambda Function for Search API (with headless browser)
     // ============================================
     const searchFunction = new lambda.Function(this, 'SearchFunction', {
       functionName: 'whofoundme-dev-search',
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'handlers/search.handler',
       code: lambda.Code.fromAsset(path.join(projectRoot, 'backend/lambda-bundle')),
-      memorySize: 256,
-      timeout: cdk.Duration.seconds(30), // More timeout for dev
-      architecture: lambda.Architecture.ARM_64,
+      memorySize: 1792, // Chromium requires ~1GB minimum
+      timeout: cdk.Duration.seconds(60), // Browser operations are slower
+      architecture: lambda.Architecture.X86_64, // x86 for better Chromium compatibility
       environment: {
         NODE_ENV: 'development',
       },

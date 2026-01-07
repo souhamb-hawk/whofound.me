@@ -17,7 +17,9 @@
     "clean": "rm -rf dist lambda-bundle coverage"
   },
   "dependencies": {
-    "cheerio": "^1.0.0-rc.12"
+    "@sparticuz/chromium": "^123.0.1",
+    "cheerio": "^1.0.0-rc.12",
+    "puppeteer-core": "^22.15.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.131",

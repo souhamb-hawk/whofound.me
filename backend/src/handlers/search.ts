@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import type { SearchRequest, SearchResponse, ExposureReport } from '../types/index.js';
 import { normalizeInput, hashQuery } from '../utils/normalize.js';
-import { searchAllBrokers } from '../brokers/index.js';
+import { searchAllBrokers, browserManager } from '../brokers/index.js';
 
 /**
  * Lambda handler for the search endpoint
@@ -75,6 +75,12 @@ export async function handler(
     return createResponse(400, {
       success: false,
       error: message,
+    });
+  } finally {
+    // Close browser to free resources
+    // This runs after every invocation to prevent memory leaks
+    await browserManager.close().catch(() => {
+      // Ignore close errors
     });
   }
 }

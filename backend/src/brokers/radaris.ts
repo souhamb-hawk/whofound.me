@@ -1,12 +1,12 @@
 import * as cheerio from 'cheerio';
 import type { NormalizedInput, BrokerResult, BrokerRegistryEntry } from '../types/index.js';
-import { BaseBroker } from './base.js';
+import { BrowserBaseBroker } from './browser-base.js';
 
 /**
  * Radaris broker integration
- * Searches radaris.com for public listings
+ * Searches radaris.com for public listings using headless browser
  */
-export class RadarisBroker extends BaseBroker {
+export class RadarisBroker extends BrowserBaseBroker {
   constructor(config: BrokerRegistryEntry) {
     super(config);
   }
@@ -35,13 +35,22 @@ export class RadarisBroker extends BaseBroker {
   protected parseResponse(html: string, _input: NormalizedInput): BrokerResult {
     const $ = cheerio.load(html);
     
-    // Look for person results
-    const personCards = $('.person-card, .card-person, [data-person], .search-result');
+    // Look for person results - Radaris specific selectors
+    const personCards = $('.person-card, .card-person, [data-person], .search-result, .PersonCard, .person-info');
     
     if (personCards.length === 0) {
       const noResults = $('.no-results, .not-found, .empty').length > 0;
-      if (noResults || html.includes('No results found')) {
+      if (noResults || html.includes('No results found') || html.includes('We couldn\'t find')) {
         return this.createNotFoundResult();
+      }
+      
+      // Check if we got blocked or hit a captcha
+      if (html.includes('captcha') || html.includes('robot') || html.includes('blocked')) {
+        return {
+          ...this.createNotFoundResult(),
+          error: 'Request blocked by site protection',
+          notes: 'Site may be blocking automated requests',
+        };
       }
       
       return {
@@ -52,15 +61,15 @@ export class RadarisBroker extends BaseBroker {
 
     const exposedFields: string[] = [];
     
-    if ($('.address, .location, [data-address]').length > 0) {
+    if ($('.address, .location, [data-address], .addr').length > 0 || html.includes('address')) {
       exposedFields.push('address');
     }
     
-    if ($('.phone, [data-phone]').length > 0) {
+    if ($('.phone, [data-phone], .tel').length > 0 || html.includes('phone')) {
       exposedFields.push('phone');
     }
     
-    if ($('.email, [data-email]').length > 0) {
+    if ($('.email, [data-email]').length > 0 || html.includes('email')) {
       exposedFields.push('email');
     }
     
@@ -68,7 +77,7 @@ export class RadarisBroker extends BaseBroker {
       exposedFields.push('age');
     }
     
-    if ($('.relatives, .family, [data-relatives]').length > 0) {
+    if ($('.relatives, .family, [data-relatives]').length > 0 || html.includes('relatives')) {
       exposedFields.push('relatives');
     }
 
@@ -81,4 +90,3 @@ export class RadarisBroker extends BaseBroker {
     return this.createFoundResult(exposedFields, publicUrl);
   }
 }
-

@@ -1,3 +1,5 @@
 {
-  "type": "module"
+  "dependencies": {
+    "@sparticuz/chromium": "^123.0.0"
+  }
 }

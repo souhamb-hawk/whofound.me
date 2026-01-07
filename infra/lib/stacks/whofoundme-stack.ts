@@ -13,6 +13,9 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
+// Get the project root directory (infra is one level below project root)
+const projectRoot = path.resolve(process.cwd(), '..');
+
 export interface WhofoundmeStackProps extends cdk.StackProps {
   domainName: string;
   certificate: acm.ICertificate;
@@ -54,7 +57,7 @@ export class WhofoundmeStack extends cdk.Stack {
       functionName: 'whofoundme-search',
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'handlers/search.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../../backend/dist')),
+      code: lambda.Code.fromAsset(path.join(projectRoot, 'backend/lambda-bundle')),
       memorySize: 256, // Cost guardrail: ≤256MB
       timeout: cdk.Duration.seconds(5), // Cost guardrail: ≤5s
       architecture: lambda.Architecture.ARM_64,

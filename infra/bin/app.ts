@@ -3,6 +3,7 @@ import 'source-map-support/register.js';
 import * as cdk from 'aws-cdk-lib';
 import { WhofoundmeStack } from '../lib/stacks/whofoundme-stack.js';
 import { CertificateStack } from '../lib/stacks/certificate-stack.js';
+import { DevStack } from '../lib/stacks/dev-stack.js';
 
 const app = new cdk.App();
 
@@ -20,25 +21,37 @@ const envUsEast1: cdk.Environment = {
 // Domain configuration
 const domainName = 'whofound.me';
 
-// Certificate must be in us-east-1 for CloudFront
-const certificateStack = new CertificateStack(app, 'WhofoundmeCertificateStack', {
-  env: envUsEast1,
-  domainName,
-  crossRegionReferences: true,
-  description: 'whofound.me - ACM Certificate (us-east-1 for CloudFront)',
-});
+// Check if deploying dev or production
+const deploymentMode = app.node.tryGetContext('mode') || 'dev';
 
-// Main stack in eu-west-1
-const mainStack = new WhofoundmeStack(app, 'WhofoundmeStack', {
-  env: envEuWest1,
-  domainName,
-  certificate: certificateStack.certificate,
-  crossRegionReferences: true,
-  description: 'whofound.me - Main infrastructure (eu-west-1)',
-});
+if (deploymentMode === 'production') {
+  // Production deployment with custom domain
+  // Certificate must be in us-east-1 for CloudFront
+  const certificateStack = new CertificateStack(app, 'WhofoundmeCertificateStack', {
+    env: envUsEast1,
+    domainName,
+    crossRegionReferences: true,
+    description: 'whofound.me - ACM Certificate (us-east-1 for CloudFront)',
+  });
 
-// Ensure certificate is created first
-mainStack.addDependency(certificateStack);
+  // Main stack in eu-west-1
+  const mainStack = new WhofoundmeStack(app, 'WhofoundmeStack', {
+    env: envEuWest1,
+    domainName,
+    certificate: certificateStack.certificate,
+    crossRegionReferences: true,
+    description: 'whofound.me - Main infrastructure (eu-west-1)',
+  });
+
+  // Ensure certificate is created first
+  mainStack.addDependency(certificateStack);
+} else {
+  // Development deployment without custom domain
+  new DevStack(app, 'WhofoundmeDevStack', {
+    env: envEuWest1,
+    description: 'whofound.me - Development infrastructure',
+  });
+}
 
 app.synth();
 

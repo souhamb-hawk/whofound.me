@@ -5,7 +5,7 @@ import { YellowPagesBroker } from './yellowpages.js';
 import { BaseBroker } from './base.js';
 
 // Import the broker registry
-import registry from '../../../brokers.registry.json' with { type: 'json' };
+import registry from '../brokers.registry.json' with { type: 'json' };
 
 /**
  * Map of broker IDs to their implementation classes

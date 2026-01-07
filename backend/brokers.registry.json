@@ -1,0 +1,45 @@
+{
+  "version": "1.2.0",
+  "lastUpdated": "2026-01-07T20:06:00Z",
+  "brokers": [
+    {
+      "id": "radaris",
+      "name": "Radaris",
+      "regionsSupported": ["US"],
+      "category": "people_search",
+      "searchType": "name_location",
+      "confidenceLevel": "high",
+      "status": "active",
+      "introducedAt": "2026-01-07T00:00:00Z",
+      "searchUrl": "https://radaris.com/p",
+      "optOutUrl": "https://radaris.com/control/privacy",
+      "notes": "People search platform combining contact information, relatives, and public records. Known for broad profile exposure and notification features. ✓ Tested working."
+    },
+    {
+      "id": "spokeo",
+      "name": "Spokeo",
+      "regionsSupported": ["US"],
+      "category": "people_search",
+      "searchType": "name_location",
+      "confidenceLevel": "high",
+      "status": "active",
+      "introducedAt": "2026-01-07T00:00:00Z",
+      "searchUrl": "https://www.spokeo.com",
+      "optOutUrl": "https://www.spokeo.com/opt_out/new",
+      "notes": "Well-known people search service aggregating public records, social profiles, and contact information. Often cited as a major consumer data broker. ✓ Tested working."
+    },
+    {
+      "id": "yellowpages",
+      "name": "YellowPages",
+      "regionsSupported": ["US"],
+      "category": "directory",
+      "searchType": "name_location",
+      "confidenceLevel": "low",
+      "status": "active",
+      "introducedAt": "2026-01-07T00:00:00Z",
+      "searchUrl": "https://www.yellowpages.com",
+      "optOutUrl": "https://www.yellowpages.com/support",
+      "notes": "Business and residential directory service. Limited personal listings. Does not provide criminal or background check data. ✓ Tested working."
+    }
+  ]
+}

@@ -3,6 +3,7 @@
  * Design Pattern: Minimal Utility Interface with Subtle Motion
  * 
  * Privacy-first utility. Clean, calm, serious, non-experimental.
+ * Supports automatic light/dark mode based on system preference.
  */
 
 /* ============================================
@@ -28,7 +29,7 @@
   --leading-normal: 1.5;
   --leading-relaxed: 1.625;
   
-  /* Colors - Neutral palette with purposeful accents */
+  /* Colors - Light Mode (Default) */
   --color-bg: #fafafa;
   --color-bg-alt: #f5f5f5;
   --color-surface: #ffffff;
@@ -52,6 +53,12 @@
   --color-risk-low: #6b7280;
   --color-risk-medium: #d97706;
   --color-risk-high: #dc2626;
+  
+  /* Brand Colors */
+  --color-brand-gradient-start: #1a1a1a;
+  --color-brand-gradient-end: #374151;
+  --color-brand-accent: #059669;
+  --color-brand-accent-end: #10b981;
   
   /* Spacing */
   --space-1: 0.25rem;
@@ -82,6 +89,51 @@
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 200ms ease;
+  
+  /* Color scheme for form inputs */
+  color-scheme: light dark;
+}
+
+/* ============================================
+   Dark Mode (System Preference)
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Colors - Dark Mode */
+    --color-bg: #0f0f0f;
+    --color-bg-alt: #171717;
+    --color-surface: #1f1f1f;
+    --color-text: #f5f5f5;
+    --color-text-muted: #a1a1aa;
+    --color-text-subtle: #71717a;
+    --color-border: #2e2e2e;
+    --color-border-strong: #404040;
+    
+    /* Semantic Colors - Adjusted for dark mode */
+    --color-found: #10b981;
+    --color-found-bg: #064e3b;
+    --color-not-found: #a1a1aa;
+    --color-warning: #fbbf24;
+    --color-warning-bg: #451a03;
+    --color-error: #f87171;
+    --color-link: #60a5fa;
+    --color-link-hover: #93c5fd;
+    
+    /* Risk Level Colors - Adjusted for dark mode */
+    --color-risk-low: #a1a1aa;
+    --color-risk-medium: #fbbf24;
+    --color-risk-high: #f87171;
+    
+    /* Brand Colors - Dark mode */
+    --color-brand-gradient-start: #f5f5f5;
+    --color-brand-gradient-end: #d4d4d8;
+    --color-brand-accent: #10b981;
+    --color-brand-accent-end: #34d399;
+    
+    /* Shadows - Adjusted for dark mode */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+  }
 }
 
 /* ============================================

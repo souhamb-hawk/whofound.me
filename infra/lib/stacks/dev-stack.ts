@@ -7,24 +7,47 @@ import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as apigatewayv2Integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
 // Get the project root directory (infra is one level below project root)
 const projectRoot = path.resolve(process.cwd(), '..');
 
+// Domain configuration
+const DOMAIN_NAME = 'whofound.me';
+const HOSTED_ZONE_ID = 'Z05081141Y666ISOUTNAR';
+const CERTIFICATE_ARN = 'arn:aws:acm:us-east-1:491085422741:certificate/b2ab41b3-517e-4e49-9040-6b67543df60f';
+
 /**
- * Development/Testing Stack
+ * Development/Testing Stack with Custom Domain
  * 
- * Simplified infrastructure for testing without custom domain:
+ * Infrastructure for whofound.me:
  * - S3 bucket for static frontend
  * - Lambda function for search API
  * - API Gateway HTTP API
- * - CloudFront distribution (using default CloudFront domain)
+ * - CloudFront distribution with custom domain
+ * - Route53 DNS records
  */
 export class DevStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // ============================================
+    // Import existing resources
+    // ============================================
+    const certificate = acm.Certificate.fromCertificateArn(
+      this,
+      'Certificate',
+      CERTIFICATE_ARN
+    );
+
+    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+      hostedZoneId: HOSTED_ZONE_ID,
+      zoneName: DOMAIN_NAME,
+    });
 
     // ============================================
     // S3 Bucket for Frontend Static Assets
@@ -79,7 +102,7 @@ export class DevStack extends cdk.Stack {
     });
 
     // ============================================
-    // CloudFront Distribution
+    // CloudFront Distribution with Custom Domain
     // ============================================
     
     const oac = new cloudfront.S3OriginAccessControl(this, 'OAC', {
@@ -90,6 +113,10 @@ export class DevStack extends cdk.Stack {
       defaultRootObject: 'index.html',
       httpVersion: cloudfront.HttpVersion.HTTP2,
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+      
+      // Custom domain configuration
+      domainNames: [DOMAIN_NAME, `www.${DOMAIN_NAME}`],
+      certificate,
       
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(websiteBucket, {
@@ -130,6 +157,28 @@ export class DevStack extends cdk.Stack {
     });
 
     // ============================================
+    // Route53 DNS Records
+    // ============================================
+    
+    // A record for apex domain (whofound.me)
+    new route53.ARecord(this, 'ApexRecord', {
+      zone: hostedZone,
+      recordName: DOMAIN_NAME,
+      target: route53.RecordTarget.fromAlias(
+        new route53Targets.CloudFrontTarget(distribution)
+      ),
+    });
+
+    // A record for www subdomain (www.whofound.me)
+    new route53.ARecord(this, 'WwwRecord', {
+      zone: hostedZone,
+      recordName: `www.${DOMAIN_NAME}`,
+      target: route53.RecordTarget.fromAlias(
+        new route53Targets.CloudFrontTarget(distribution)
+      ),
+    });
+
+    // ============================================
     // Deploy Frontend Assets
     // ============================================
     new s3deploy.BucketDeployment(this, 'DeployFrontend', {
@@ -143,8 +192,13 @@ export class DevStack extends cdk.Stack {
     // Outputs
     // ============================================
     new cdk.CfnOutput(this, 'WebsiteURL', {
+      value: `https://${DOMAIN_NAME}`,
+      description: 'Website URL',
+    });
+
+    new cdk.CfnOutput(this, 'CloudFrontURL', {
       value: `https://${distribution.distributionDomainName}`,
-      description: 'CloudFront Website URL',
+      description: 'CloudFront Distribution URL',
     });
 
     new cdk.CfnOutput(this, 'ApiEndpoint', {
@@ -158,4 +212,3 @@ export class DevStack extends cdk.Stack {
     });
   }
 }
-

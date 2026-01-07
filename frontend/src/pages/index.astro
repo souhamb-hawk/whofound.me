@@ -11,6 +11,9 @@ import SearchForm from '../components/SearchForm.astro';
   <div class="hero">
     <div class="container">
       <header class="hero-header">
+        <div class="brand">
+          <span class="brand-name">whofound<span class="brand-dot">.</span>me</span>
+        </div>
         <h1 class="hero-title">Where is your data listed?</h1>
         <p class="hero-subtitle">
           Discover which data broker websites publicly expose your personal information.
@@ -45,6 +48,7 @@ import SearchForm from '../components/SearchForm.astro';
 <style>
   .hero {
     padding: var(--space-12) 0 var(--space-16);
+    background: linear-gradient(180deg, var(--color-bg-alt) 0%, var(--color-bg) 100%);
   }
   
   .hero-header {
@@ -52,9 +56,35 @@ import SearchForm from '../components/SearchForm.astro';
     margin-bottom: var(--space-8);
   }
   
+  .brand {
+    margin-bottom: var(--space-6);
+  }
+  
+  .brand-name {
+    font-family: var(--font-mono);
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--color-text);
+    display: inline-block;
+    background: linear-gradient(135deg, #1a1a1a 0%, #374151 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .brand-dot {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
   .hero-title {
     margin-bottom: var(--space-4);
-    font-size: clamp(var(--text-2xl), 5vw, var(--text-4xl));
+    font-size: clamp(var(--text-xl), 4vw, var(--text-3xl));
+    font-weight: 500;
+    color: var(--color-text-muted);
   }
   
   .hero-subtitle {

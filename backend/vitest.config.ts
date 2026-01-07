@@ -10,12 +10,12 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.d.ts', 'src/types/**/*.ts'],
-      // Thresholds will be restored to 90% in Phase 4 after all brokers are tested
+      // Phase 4: Backend Testing Gate - 90% coverage enforced
       thresholds: {
-        lines: 50,
-        functions: 75,
+        lines: 90,
+        functions: 90,
         branches: 85,
-        statements: 50
+        statements: 90
       }
     },
     testTimeout: 10000,

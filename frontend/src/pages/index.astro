@@ -1,0 +1,250 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PrivacyAssurance from '../components/PrivacyAssurance.astro';
+import SearchForm from '../components/SearchForm.astro';
+---
+
+<BaseLayout 
+  title="whofound.me — Discover Your Public Data Exposure"
+  description="Free, privacy-first tool to find where your personal data is publicly listed on data broker websites. No accounts, no tracking, no storage."
+>
+  <div class="hero">
+    <div class="container">
+      <header class="hero-header">
+        <div class="brand">
+          <span class="brand-name">whofound<span class="brand-dot">.</span>me</span>
+        </div>
+        <h1 class="hero-title">Where is your data listed?</h1>
+        <p class="hero-subtitle">
+          Discover which data broker websites publicly expose your personal information.
+          Free, instant, and completely private.
+        </p>
+      </header>
+      
+      <PrivacyAssurance variant="landing" />
+      
+      <SearchForm />
+      
+      <section class="info-section" aria-labelledby="what-heading">
+        <h2 id="what-heading">What This Tool Does</h2>
+        <ul class="info-list">
+          <li>Checks major US data broker websites for public listings</li>
+          <li>Shows which sites expose your address, phone, relatives, and more</li>
+          <li>Provides direct links to opt-out pages</li>
+        </ul>
+        
+        <h3>What This Tool Does NOT Do</h3>
+        <ul class="info-list info-list-not">
+          <li>Store or log any of your information</li>
+          <li>Create accounts or profiles</li>
+          <li>Remove your data (you must do this manually)</li>
+          <li>Track your visit or use cookies</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding: var(--space-12) 0 var(--space-16);
+    background: linear-gradient(180deg, var(--color-bg-alt) 0%, var(--color-bg) 100%);
+  }
+  
+  .hero-header {
+    text-align: center;
+    margin-bottom: var(--space-8);
+  }
+  
+  .brand {
+    margin-bottom: var(--space-6);
+  }
+  
+  .brand-name {
+    font-family: var(--font-mono);
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--color-text);
+    display: inline-block;
+    background: linear-gradient(135deg, var(--color-brand-gradient-start) 0%, var(--color-brand-gradient-end) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .brand-dot {
+    background: linear-gradient(135deg, var(--color-brand-accent) 0%, var(--color-brand-accent-end) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .hero-title {
+    margin-bottom: var(--space-4);
+    font-size: clamp(var(--text-xl), 4vw, var(--text-3xl));
+    font-weight: 500;
+    color: var(--color-text-muted);
+  }
+  
+  .hero-subtitle {
+    font-size: var(--text-lg);
+    color: var(--color-text-muted);
+    max-width: 36rem;
+    margin: 0 auto;
+  }
+  
+  .search-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    margin-bottom: var(--space-10);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .search-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+  
+  .form-label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text);
+  }
+  
+  .required {
+    color: var(--color-error);
+  }
+  
+  .form-input {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-family: inherit;
+    background: var(--color-bg);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  
+  .form-input::placeholder {
+    color: var(--color-text-subtle);
+  }
+  
+  .form-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  
+  .btn {
+    padding: var(--space-3) var(--space-6);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+  }
+  
+  .btn:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+  
+  .btn-primary {
+    background: var(--color-text);
+    color: var(--color-bg);
+  }
+  
+  .btn-primary:hover {
+    background: #333;
+  }
+  
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+  
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .form-footer {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-align: center;
+    margin: 0;
+  }
+  
+  .info-section {
+    padding: var(--space-8) 0;
+  }
+  
+  .info-section h2 {
+    margin-bottom: var(--space-4);
+  }
+  
+  .info-section h3 {
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-4);
+  }
+  
+  .info-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  
+  .info-list li {
+    padding-left: var(--space-6);
+    position: relative;
+    color: var(--color-text-muted);
+  }
+  
+  .info-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--color-found);
+    font-weight: 600;
+  }
+  
+  .info-list-not li::before {
+    content: "✗";
+    color: var(--color-text-subtle);
+  }
+  
+  .results-section {
+    margin-top: var(--space-8);
+  }
+  
+  @media (max-width: 480px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+

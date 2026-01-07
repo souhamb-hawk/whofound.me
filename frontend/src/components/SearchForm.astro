@@ -1,0 +1,771 @@
+---
+/**
+ * Search Form Component
+ * Hydrated island for form submission and results display
+ * Uses client:load for immediate interactivity
+ */
+---
+
+<div class="search-container">
+  <section class="search-section" aria-labelledby="search-heading">
+    <h2 id="search-heading" class="sr-only">Search for your data</h2>
+    
+    <form id="search-form" class="search-form" novalidate>
+      <div class="form-group">
+        <label for="fullName" class="form-label">
+          Full Name <span class="required" aria-hidden="true">*</span>
+          <span class="sr-only">(required)</span>
+        </label>
+        <input 
+          type="text" 
+          id="fullName" 
+          name="fullName" 
+          class="form-input"
+          placeholder="e.g., John Smith"
+          required
+          minlength="3"
+          autocomplete="name"
+        />
+        <p class="form-hint">First and last name required</p>
+        <p id="fullName-error" class="form-error" hidden></p>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="city" class="form-label">City</label>
+          <input 
+            type="text" 
+            id="city" 
+            name="city" 
+            class="form-input"
+            placeholder="Optional"
+            autocomplete="address-level2"
+          />
+        </div>
+        
+        <div class="form-group">
+          <label for="region" class="form-label">State</label>
+          <input 
+            type="text" 
+            id="region" 
+            name="region" 
+            class="form-input"
+            placeholder="Optional"
+            autocomplete="address-level1"
+          />
+        </div>
+      </div>
+      
+      <button type="submit" class="btn btn-primary" id="submit-btn">
+        <span class="btn-text">Check My Exposure</span>
+        <span class="btn-loading" hidden>
+          <svg class="spinner" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" />
+          </svg>
+          Checking...
+        </span>
+      </button>
+      
+      <p class="form-footer">
+        Results will appear below. No data is saved or logged.
+      </p>
+    </form>
+  </section>
+  
+  <!-- Loading State -->
+  <div id="loading-state" class="loading-state" hidden>
+    <div class="loading-indicator">
+      <svg class="spinner spinner-lg" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" />
+      </svg>
+    </div>
+    <p class="loading-text">Checking public listings…</p>
+    <p class="loading-privacy">Nothing is being saved.</p>
+  </div>
+  
+  <!-- Error State -->
+  <div id="error-state" class="error-state" role="alert" hidden>
+    <h3 class="error-title">Something went wrong</h3>
+    <p id="error-message" class="error-message"></p>
+    <button type="button" class="btn btn-secondary" id="retry-btn">Try Again</button>
+  </div>
+  
+  <!-- Results Section -->
+  <section id="results-section" class="results-section" aria-labelledby="results-heading" hidden>
+    <h2 id="results-heading" class="results-title">Your Exposure Report</h2>
+    
+    <div class="results-summary" id="results-summary">
+      <!-- Summary will be inserted here -->
+    </div>
+    
+    <div class="results-list" id="results-list">
+      <!-- Results will be inserted here -->
+    </div>
+    
+    <div class="results-privacy">
+      <section class="privacy-results" aria-labelledby="privacy-heading">
+        <h3 id="privacy-heading" class="privacy-results-title">Privacy & Trust</h3>
+        <ul class="privacy-results-list">
+          <li>We did not store your name or search.</li>
+          <li>We did not create a profile about you.</li>
+          <li>We did not contact any data broker.</li>
+          <li>Refreshing this page erases the results.</li>
+        </ul>
+        <details class="privacy-advanced">
+          <summary>Technical details</summary>
+          <p>No analytics, no logs, no identifiers. Source code available for inspection.</p>
+        </details>
+      </section>
+    </div>
+    
+    <div class="donation-cta" id="donation-cta">
+      <h3 class="donation-title">Found this helpful?</h3>
+      <p class="donation-text">
+        This tool is free and private. If it saved you time, consider supporting our work.
+      </p>
+      <a href="#donate" class="btn btn-secondary donation-btn">Support This Project</a>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Search form interaction logic
+  const form = document.getElementById('search-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const loadingState = document.getElementById('loading-state') as HTMLDivElement;
+  const errorState = document.getElementById('error-state') as HTMLDivElement;
+  const errorMessage = document.getElementById('error-message') as HTMLParagraphElement;
+  const retryBtn = document.getElementById('retry-btn') as HTMLButtonElement;
+  const resultsSection = document.getElementById('results-section') as HTMLElement;
+  const resultsSummary = document.getElementById('results-summary') as HTMLDivElement;
+  const resultsList = document.getElementById('results-list') as HTMLDivElement;
+
+  type RiskLevel = 'low' | 'medium' | 'high';
+  
+  interface BrokerResult {
+    brokerId: string;
+    brokerName: string;
+    found: boolean;
+    exposedFields: string[];
+    publicUrl?: string;
+    riskLevel: RiskLevel;
+    notes?: string;
+    error?: string;
+  }
+  
+  interface ExposureReport {
+    queryHash: string;
+    timestamp: string;
+    results: BrokerResult[];
+  }
+  
+  interface SearchResponse {
+    success: boolean;
+    report?: ExposureReport;
+    error?: string;
+  }
+
+  // API endpoint (relative path, resolved by CloudFront)
+  const API_ENDPOINT = '/api/search';
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await performSearch();
+  });
+
+  retryBtn.addEventListener('click', async () => {
+    await performSearch();
+  });
+
+  async function performSearch() {
+    const formData = new FormData(form);
+    const fullName = (formData.get('fullName') as string)?.trim();
+    const city = (formData.get('city') as string)?.trim();
+    const region = (formData.get('region') as string)?.trim();
+
+    // Client-side validation
+    if (!fullName || fullName.split(/\s+/).length < 2) {
+      showError('Please enter your full name (first and last name).');
+      return;
+    }
+
+    // Show loading state
+    showLoading();
+
+    try {
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName,
+          city: city || undefined,
+          region: region || undefined,
+        }),
+      });
+
+      const data: SearchResponse = await response.json();
+
+      if (!data.success || !data.report) {
+        showError(data.error || 'Search failed. Please try again.');
+        return;
+      }
+
+      showResults(data.report);
+    } catch (err) {
+      showError('Unable to connect to the server. Please check your connection and try again.');
+    }
+  }
+
+  function showLoading() {
+    form.parentElement?.setAttribute('hidden', '');
+    errorState.setAttribute('hidden', '');
+    resultsSection.setAttribute('hidden', '');
+    loadingState.removeAttribute('hidden');
+    
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoading = submitBtn.querySelector('.btn-loading');
+    btnText?.setAttribute('hidden', '');
+    btnLoading?.removeAttribute('hidden');
+    submitBtn.disabled = true;
+  }
+
+  function showError(message: string) {
+    loadingState.setAttribute('hidden', '');
+    resultsSection.setAttribute('hidden', '');
+    form.parentElement?.removeAttribute('hidden');
+    errorState.removeAttribute('hidden');
+    errorMessage.textContent = message;
+    
+    resetButton();
+  }
+
+  function resetButton() {
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoading = submitBtn.querySelector('.btn-loading');
+    btnLoading?.setAttribute('hidden', '');
+    btnText?.removeAttribute('hidden');
+    submitBtn.disabled = false;
+  }
+
+  function showResults(report: ExposureReport) {
+    loadingState.setAttribute('hidden', '');
+    errorState.setAttribute('hidden', '');
+    form.parentElement?.removeAttribute('hidden');
+    resultsSection.removeAttribute('hidden');
+    
+    resetButton();
+
+    // Calculate summary
+    const foundCount = report.results.filter(r => r.found).length;
+    const totalCount = report.results.length;
+    const highRiskCount = report.results.filter(r => r.found && r.riskLevel === 'high').length;
+
+    resultsSummary.innerHTML = `
+      <div class="summary-stat">
+        <span class="summary-number ${foundCount > 0 ? 'found' : 'not-found'}">${foundCount}</span>
+        <span class="summary-label">of ${totalCount} brokers have your data</span>
+      </div>
+      ${highRiskCount > 0 ? `
+        <div class="summary-warning">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          ${highRiskCount} high-risk exposure${highRiskCount > 1 ? 's' : ''} found
+        </div>
+      ` : ''}
+    `;
+
+    // Render individual results
+    resultsList.innerHTML = report.results.map(result => `
+      <div class="result-card ${result.found ? 'result-found' : 'result-not-found'}">
+        <div class="result-header">
+          <h4 class="result-broker">${escapeHtml(result.brokerName)}</h4>
+          <span class="result-status ${result.found ? 'status-found' : 'status-not-found'}">
+            ${result.found ? 'Data Found' : 'Not Found'}
+          </span>
+        </div>
+        ${result.found ? `
+          <div class="result-body">
+            ${result.exposedFields.length > 0 ? `
+              <div class="result-fields">
+                <span class="fields-label">Exposed data:</span>
+                <span class="fields-list">${result.exposedFields.map(f => escapeHtml(f)).join(', ')}</span>
+              </div>
+            ` : ''}
+            <div class="result-risk">
+              <span class="risk-label">Risk level:</span>
+              <span class="risk-badge risk-${result.riskLevel}">${result.riskLevel}</span>
+            </div>
+            ${result.publicUrl ? `
+              <a href="${escapeHtml(result.publicUrl)}" target="_blank" rel="noopener" class="result-link">
+                View listing →
+              </a>
+            ` : ''}
+            ${result.notes ? `
+              <p class="result-notes">${escapeHtml(result.notes)}</p>
+            ` : ''}
+          </div>
+        ` : ''}
+        ${result.error ? `
+          <p class="result-error">${escapeHtml(result.error)}</p>
+        ` : ''}
+      </div>
+    `).join('');
+
+    // Scroll to results
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+</script>
+
+<style>
+  .search-container {
+    margin-bottom: var(--space-10);
+  }
+  
+  .search-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .search-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+  
+  .form-label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text);
+  }
+  
+  .required {
+    color: var(--color-error);
+  }
+  
+  .form-input {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-family: inherit;
+    background: var(--color-bg);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: var(--color-link);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  
+  .form-input::placeholder {
+    color: var(--color-text-subtle);
+  }
+  
+  .form-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  
+  .form-error {
+    font-size: var(--text-sm);
+    color: var(--color-error);
+    margin: 0;
+  }
+  
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-6);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+  }
+  
+  .btn:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+  
+  .btn-primary {
+    background: var(--color-text);
+    color: var(--color-bg);
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    background: #333;
+  }
+  
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .btn-secondary {
+    background: var(--color-bg);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+  }
+  
+  .btn-secondary:hover {
+    background: var(--color-bg-alt);
+  }
+  
+  .spinner {
+    width: 1rem;
+    height: 1rem;
+    animation: spin 1s linear infinite;
+  }
+  
+  .spinner-lg {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  .form-footer {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-align: center;
+    margin: 0;
+  }
+  
+  /* Loading State */
+  .loading-state {
+    text-align: center;
+    padding: var(--space-12) var(--space-4);
+  }
+  
+  .loading-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--space-4);
+    color: var(--color-text-muted);
+  }
+  
+  .loading-text {
+    font-size: var(--text-lg);
+    color: var(--color-text);
+    margin-bottom: var(--space-2);
+  }
+  
+  .loading-privacy {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+  
+  /* Error State */
+  .error-state {
+    background: var(--color-warning-bg);
+    border: 1px solid var(--color-warning);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    text-align: center;
+    margin-top: var(--space-6);
+  }
+  
+  .error-title {
+    color: var(--color-warning);
+    margin-bottom: var(--space-2);
+  }
+  
+  .error-message {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-4);
+  }
+  
+  /* Results Section */
+  .results-section {
+    margin-top: var(--space-8);
+  }
+  
+  .results-title {
+    margin-bottom: var(--space-6);
+  }
+  
+  .results-summary {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    margin-bottom: var(--space-6);
+  }
+  
+  .summary-stat {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  
+  .summary-number {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+  }
+  
+  .summary-number.found {
+    color: var(--color-warning);
+  }
+  
+  .summary-number.not-found {
+    color: var(--color-found);
+  }
+  
+  .summary-label {
+    font-size: var(--text-lg);
+    color: var(--color-text-muted);
+  }
+  
+  .summary-warning {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-risk-high);
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+  
+  .summary-warning svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  .results-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+  }
+  
+  .result-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+  }
+  
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
+  }
+  
+  .result-broker {
+    font-size: var(--text-lg);
+    margin: 0;
+  }
+  
+  .result-status {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-md);
+  }
+  
+  .status-found {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+  }
+  
+  .status-not-found {
+    background: var(--color-bg-alt);
+    color: var(--color-text-muted);
+  }
+  
+  .result-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  
+  .result-fields {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  
+  .fields-label {
+    font-weight: 500;
+  }
+  
+  .result-risk {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+  }
+  
+  .risk-label {
+    color: var(--color-text-muted);
+  }
+  
+  .risk-badge {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+  
+  .risk-low {
+    background: var(--color-bg-alt);
+    color: var(--color-risk-low);
+  }
+  
+  .risk-medium {
+    background: var(--color-warning-bg);
+    color: var(--color-risk-medium);
+  }
+  
+  .risk-high {
+    background: #fef2f2;
+    color: var(--color-risk-high);
+  }
+  
+  .result-link {
+    font-size: var(--text-sm);
+  }
+  
+  .result-notes {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin: 0;
+  }
+  
+  .result-error {
+    font-size: var(--text-sm);
+    color: var(--color-error);
+    margin: 0;
+  }
+  
+  /* Privacy Results */
+  .privacy-results {
+    background: var(--color-bg-alt);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+  }
+  
+  .privacy-results-title {
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-4);
+  }
+  
+  .privacy-results-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+  
+  .privacy-results-list li {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    padding-left: var(--space-4);
+    position: relative;
+  }
+  
+  .privacy-results-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--color-text-subtle);
+  }
+  
+  .privacy-advanced {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  
+  .privacy-advanced summary {
+    cursor: pointer;
+    color: var(--color-link);
+  }
+  
+  .privacy-advanced p {
+    margin-top: var(--space-2);
+    padding-left: var(--space-4);
+  }
+  
+  /* Donation CTA */
+  .donation-cta {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    text-align: center;
+    margin-top: var(--space-8);
+  }
+  
+  .donation-title {
+    margin-bottom: var(--space-2);
+  }
+  
+  .donation-text {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-4);
+  }
+  
+  .donation-btn {
+    display: inline-flex;
+  }
+  
+  @media (max-width: 480px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+    
+    .result-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-2);
+    }
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    .spinner {
+      animation: none;
+    }
+  }
+</style>
+

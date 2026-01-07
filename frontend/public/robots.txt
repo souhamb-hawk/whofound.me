@@ -1,0 +1,9 @@
+# whofound.me robots.txt
+# Allow all crawlers to index the site
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://whofound.me/sitemap.xml
+

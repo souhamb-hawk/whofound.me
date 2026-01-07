@@ -1,0 +1,165 @@
+---
+/**
+ * Privacy Assurance Component
+ * Displays privacy guarantees to users in a clear, visible manner
+ * Required on landing page, loading state, and results page
+ */
+
+interface Props {
+  variant: 'landing' | 'loading' | 'results';
+}
+
+const { variant } = Astro.props;
+---
+
+{variant === 'landing' && (
+  <div class="privacy-block" role="complementary" aria-label="Privacy guarantees">
+    <ul class="privacy-list">
+      <li>
+        <svg class="icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+        <span>No accounts. No tracking. No cookies.</span>
+      </li>
+      <li>
+        <svg class="icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+        <span>Your input is never stored or logged.</span>
+      </li>
+      <li>
+        <svg class="icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+        <span>All checks run on-demand and disappear after the page loads.</span>
+      </li>
+    </ul>
+    <p class="privacy-verify">
+      You can verify this in your browser's Network tab.
+    </p>
+  </div>
+)}
+
+{variant === 'loading' && (
+  <p class="privacy-loading" role="status" aria-live="polite">
+    Checking public listings… nothing is being saved.
+  </p>
+)}
+
+{variant === 'results' && (
+  <section class="privacy-results" aria-labelledby="privacy-heading">
+    <h3 id="privacy-heading" class="privacy-results-title">Privacy & Trust</h3>
+    <ul class="privacy-results-list">
+      <li>We did not store your name or search.</li>
+      <li>We did not create a profile about you.</li>
+      <li>We did not contact any data broker.</li>
+      <li>Refreshing this page erases the results.</li>
+    </ul>
+    <details class="privacy-advanced">
+      <summary>Technical details</summary>
+      <p>No analytics, no logs, no identifiers. Source code available for inspection.</p>
+    </details>
+  </section>
+)}
+
+<style>
+  .privacy-block {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4) var(--space-5);
+    margin-bottom: var(--space-6);
+  }
+  
+  .privacy-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  
+  .privacy-list li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+  }
+  
+  .icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    color: var(--color-found);
+  }
+  
+  .privacy-verify {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+  
+  .privacy-loading {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-align: center;
+    margin: var(--space-4) 0;
+  }
+  
+  .privacy-results {
+    background: var(--color-bg-alt);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+    margin-top: var(--space-8);
+  }
+  
+  .privacy-results-title {
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-4);
+    color: var(--color-text);
+  }
+  
+  .privacy-results-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+  
+  .privacy-results-list li {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    padding-left: var(--space-4);
+    position: relative;
+  }
+  
+  .privacy-results-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--color-text-subtle);
+  }
+  
+  .privacy-advanced {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  
+  .privacy-advanced summary {
+    cursor: pointer;
+    color: var(--color-link);
+  }
+  
+  .privacy-advanced summary:hover {
+    text-decoration: underline;
+  }
+  
+  .privacy-advanced p {
+    margin-top: var(--space-2);
+    padding-left: var(--space-4);
+  }
+</style>
+

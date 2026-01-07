@@ -1,9 +1,7 @@
 import type { NormalizedInput, BrokerResult, BrokerRegistry, BrokerRegistryEntry } from '../types/index.js';
-import { WhitepagesBroker } from './whitepages.js';
+import { RadarisBroker } from './radaris.js';
 import { SpokeoBroker } from './spokeo.js';
-import { MyLifeBroker } from './mylife.js';
-import { BeenVerifiedBroker } from './beenverified.js';
-import { PeopleFinderBroker } from './peoplefinder.js';
+import { YellowPagesBroker } from './yellowpages.js';
 import { BaseBroker } from './base.js';
 
 // Import the broker registry
@@ -11,13 +9,12 @@ import registry from '../../../brokers.registry.json' with { type: 'json' };
 
 /**
  * Map of broker IDs to their implementation classes
+ * Only includes brokers that have been tested and verified to work
  */
 const brokerImplementations: Record<string, new (config: BrokerRegistryEntry) => BaseBroker> = {
-  whitepages: WhitepagesBroker,
+  radaris: RadarisBroker,
   spokeo: SpokeoBroker,
-  mylife: MyLifeBroker,
-  beenverified: BeenVerifiedBroker,
-  peoplefinder: PeopleFinderBroker,
+  yellowpages: YellowPagesBroker,
 };
 
 /**
@@ -67,4 +64,3 @@ export async function searchAllBrokers(input: NormalizedInput): Promise<BrokerRe
 export function getBrokerRegistry(): BrokerRegistry {
   return registry as BrokerRegistry;
 }
-

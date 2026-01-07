@@ -3,10 +3,10 @@ import type { NormalizedInput, BrokerResult, BrokerRegistryEntry } from '../type
 import { BaseBroker } from './base.js';
 
 /**
- * Spokeo broker integration
- * Searches spokeo.com for public listings
+ * Radaris broker integration
+ * Searches radaris.com for public listings
  */
-export class SpokeoBroker extends BaseBroker {
+export class RadarisBroker extends BaseBroker {
   constructor(config: BrokerRegistryEntry) {
     super(config);
   }
@@ -18,13 +18,15 @@ export class SpokeoBroker extends BaseBroker {
   }
 
   protected buildSearchUrl(input: NormalizedInput): string {
-    // Format: https://www.spokeo.com/John-Smith or with location /John-Smith/New-York-NY
-    const namePart = input.fullName.split(' ').join('-');
-    let url = `${this.config.searchUrl}/${encodeURIComponent(namePart)}`;
+    // Format: https://radaris.com/p/First/Last/
+    const nameParts = input.fullName.split(' ');
+    const firstName = encodeURIComponent(nameParts[0] || '');
+    const lastName = encodeURIComponent(nameParts.slice(1).join(' ') || '');
+    
+    let url = `${this.config.searchUrl}/${firstName}/${lastName}/`;
     
     if (input.city && input.region) {
-      const locationPart = `${input.city}-${input.region}`.replace(/\s+/g, '-');
-      url += `/${encodeURIComponent(locationPart)}`;
+      url += `${encodeURIComponent(input.city)}-${encodeURIComponent(input.region)}/`;
     }
     
     return url;
@@ -33,13 +35,12 @@ export class SpokeoBroker extends BaseBroker {
   protected parseResponse(html: string, _input: NormalizedInput): BrokerResult {
     const $ = cheerio.load(html);
     
-    // Look for search results
-    const resultCards = $('.search-result, .result-card, [data-testid="search-result"]');
+    // Look for person results
+    const personCards = $('.person-card, .card-person, [data-person], .search-result');
     
-    if (resultCards.length === 0) {
-      // Check for "no results" message
-      const noResults = $('.no-results, .empty-state').length > 0;
-      if (noResults) {
+    if (personCards.length === 0) {
+      const noResults = $('.no-results, .not-found, .empty').length > 0;
+      if (noResults || html.includes('No results found')) {
         return this.createNotFoundResult();
       }
       
@@ -49,35 +50,33 @@ export class SpokeoBroker extends BaseBroker {
       };
     }
 
-    // Extract exposed data fields from result preview
     const exposedFields: string[] = [];
     
-    if ($('.location, .address').length > 0) {
+    if ($('.address, .location, [data-address]').length > 0) {
       exposedFields.push('address');
     }
     
-    if ($('.phone-number').length > 0) {
+    if ($('.phone, [data-phone]').length > 0) {
       exposedFields.push('phone');
     }
     
-    if ($('.email').length > 0) {
+    if ($('.email, [data-email]').length > 0) {
       exposedFields.push('email');
     }
     
-    if ($('.social-profiles, .social').length > 0) {
-      exposedFields.push('social profiles');
+    if ($('.age, .dob, [data-age]').length > 0) {
+      exposedFields.push('age');
     }
     
-    if ($('.relatives, .family').length > 0) {
+    if ($('.relatives, .family, [data-relatives]').length > 0) {
       exposedFields.push('relatives');
     }
 
-    // Get profile URL
-    const firstResult = resultCards.first();
-    const profileLink = firstResult.find('a').attr('href');
+    const firstResult = personCards.first();
+    const profileLink = firstResult.find('a[href*="/p/"]').attr('href');
     const publicUrl = profileLink?.startsWith('http') 
       ? profileLink 
-      : profileLink ? `https://www.spokeo.com${profileLink}` : undefined;
+      : profileLink ? `https://radaris.com${profileLink}` : undefined;
 
     return this.createFoundResult(exposedFields, publicUrl);
   }

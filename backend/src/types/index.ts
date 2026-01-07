@@ -55,8 +55,12 @@ export interface BrokerRegistryEntry {
   name: string;
   /** Supported regions (e.g., ["US", "EU"]) */
   regionsSupported: string[];
+  /** Category of broker */
+  category?: 'people_search' | 'background_check' | 'image_search' | 'directory';
   /** Search mechanism type */
-  searchType: 'html' | 'api';
+  searchType: string;
+  /** Confidence level of results */
+  confidenceLevel?: 'low' | 'medium' | 'high';
   /** Current status */
   status: 'active' | 'paused' | 'deprecated';
   /** ISO 8601 date when broker was added */

@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import type { SearchRequest, SearchResponse, ExposureReport, BrokerResult } from '../types/index.js';
+import type { SearchRequest, SearchResponse, ExposureReport } from '../types/index.js';
 import { normalizeInput, hashQuery } from '../utils/normalize.js';
 import { searchAllBrokers } from '../brokers/index.js';
 

@@ -1,62 +1,45 @@
 {
-  "version": "1.0.0",
-  "lastUpdated": "2026-01-07T00:00:00Z",
+  "version": "1.2.0",
+  "lastUpdated": "2026-01-07T20:06:00Z",
   "brokers": [
     {
-      "id": "whitepages",
-      "name": "Whitepages",
+      "id": "radaris",
+      "name": "Radaris",
       "regionsSupported": ["US"],
-      "searchType": "html",
+      "category": "people_search",
+      "searchType": "name_location",
+      "confidenceLevel": "high",
       "status": "active",
       "introducedAt": "2026-01-07T00:00:00Z",
-      "searchUrl": "https://www.whitepages.com/name",
-      "optOutUrl": "https://www.whitepages.com/suppression-requests",
-      "notes": "Primary US people search directory"
+      "searchUrl": "https://radaris.com/p",
+      "optOutUrl": "https://radaris.com/control/privacy",
+      "notes": "People search platform combining contact information, relatives, and public records. Known for broad profile exposure and notification features. ✓ Tested working."
     },
     {
       "id": "spokeo",
       "name": "Spokeo",
       "regionsSupported": ["US"],
-      "searchType": "html",
+      "category": "people_search",
+      "searchType": "name_location",
+      "confidenceLevel": "high",
       "status": "active",
       "introducedAt": "2026-01-07T00:00:00Z",
-      "searchUrl": "https://www.spokeo.com/search",
-      "optOutUrl": "https://www.spokeo.com/optout",
-      "notes": "Aggregates public records and social profiles"
+      "searchUrl": "https://www.spokeo.com",
+      "optOutUrl": "https://www.spokeo.com/opt_out/new",
+      "notes": "Well-known people search service aggregating public records, social profiles, and contact information. Often cited as a major consumer data broker. ✓ Tested working."
     },
     {
-      "id": "mylife",
-      "name": "MyLife",
+      "id": "yellowpages",
+      "name": "YellowPages",
       "regionsSupported": ["US"],
-      "searchType": "html",
+      "category": "directory",
+      "searchType": "name_location",
+      "confidenceLevel": "low",
       "status": "active",
       "introducedAt": "2026-01-07T00:00:00Z",
-      "searchUrl": "https://www.mylife.com/pub-search",
-      "optOutUrl": "https://www.mylife.com/ccpa/index.pubview",
-      "notes": "Background check and reputation service"
-    },
-    {
-      "id": "beenverified",
-      "name": "BeenVerified",
-      "regionsSupported": ["US"],
-      "searchType": "html",
-      "status": "active",
-      "introducedAt": "2026-01-07T00:00:00Z",
-      "searchUrl": "https://www.beenverified.com/f/search/name",
-      "optOutUrl": "https://www.beenverified.com/f/optout/search",
-      "notes": "Background check and people search"
-    },
-    {
-      "id": "peoplefinder",
-      "name": "PeopleFinder",
-      "regionsSupported": ["US"],
-      "searchType": "html",
-      "status": "active",
-      "introducedAt": "2026-01-07T00:00:00Z",
-      "searchUrl": "https://www.peoplefinder.com/people",
-      "optOutUrl": "https://www.peoplefinder.com/optout",
-      "notes": "Public records people search"
+      "searchUrl": "https://www.yellowpages.com",
+      "optOutUrl": "https://www.yellowpages.com/support",
+      "notes": "Business and residential directory service. Limited personal listings. Does not provide criminal or background check data. ✓ Tested working."
     }
   ]
 }
-

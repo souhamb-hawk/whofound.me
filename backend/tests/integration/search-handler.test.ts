@@ -184,13 +184,11 @@ describe('Search Handler', () => {
       const result = await handler(event);
       const body = JSON.parse(result.body as string);
 
-      expect(body.report.results).toHaveLength(5);
+      expect(body.report.results).toHaveLength(3);
       const brokerIds = body.report.results.map((r: any) => r.brokerId);
-      expect(brokerIds).toContain('whitepages');
+      expect(brokerIds).toContain('radaris');
       expect(brokerIds).toContain('spokeo');
-      expect(brokerIds).toContain('mylife');
-      expect(brokerIds).toContain('beenverified');
-      expect(brokerIds).toContain('peoplefinder');
+      expect(brokerIds).toContain('yellowpages');
     });
 
     it('should handle optional city and region', async () => {

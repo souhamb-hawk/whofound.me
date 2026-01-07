@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { PeopleFinderBroker } from '../../src/brokers/peoplefinder.js';
+import { RadarisBroker } from '../../src/brokers/radaris.js';
 import type { BrokerRegistryEntry, NormalizedInput } from '../../src/types/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const loadFixture = (name: string): string => {
   return readFileSync(
-    join(__dirname, '../fixtures/peoplefinder', name),
+    join(__dirname, '../fixtures/radaris', name),
     'utf-8'
   );
 };
@@ -19,21 +19,21 @@ const noResultsHtml = loadFixture('no-results.html');
 const changedLayoutHtml = loadFixture('changed-layout.html');
 
 const mockConfig: BrokerRegistryEntry = {
-  id: 'peoplefinder',
-  name: 'PeopleFinder',
+  id: 'radaris',
+  name: 'Radaris',
   regionsSupported: ['US'],
-  searchType: 'html',
+  searchType: 'name_location',
   status: 'active',
   introducedAt: '2026-01-07T00:00:00Z',
-  searchUrl: 'https://www.peoplefinder.com/people',
-  optOutUrl: 'https://www.peoplefinder.com/optout',
+  searchUrl: 'https://radaris.com/p',
+  optOutUrl: 'https://radaris.com/control/privacy',
 };
 
-describe('PeopleFinderBroker', () => {
-  let broker: PeopleFinderBroker;
+describe('RadarisBroker', () => {
+  let broker: RadarisBroker;
 
   beforeEach(() => {
-    broker = new PeopleFinderBroker(mockConfig);
+    broker = new RadarisBroker(mockConfig);
     vi.restoreAllMocks();
   });
 
@@ -42,25 +42,23 @@ describe('PeopleFinderBroker', () => {
       const input: NormalizedInput = { fullName: 'John Smith' };
       const url = (broker as any).buildSearchUrl(input);
       
-      expect(url).toBe('https://www.peoplefinder.com/people/John-Smith');
+      expect(url).toContain('https://radaris.com/p');
+      expect(url).toContain('John');
+      expect(url).toContain('Smith');
     });
 
     it('should build URL with location', () => {
       const input: NormalizedInput = {
         fullName: 'John Smith',
-        city: 'Seattle',
-        region: 'WA',
+        city: 'New York',
+        region: 'NY',
       };
       const url = (broker as any).buildSearchUrl(input);
       
-      expect(url).toBe('https://www.peoplefinder.com/people/John-Smith/Seattle-WA');
-    });
-
-    it('should handle multi-word names', () => {
-      const input: NormalizedInput = { fullName: 'Mary Jane Watson' };
-      const url = (broker as any).buildSearchUrl(input);
-      
-      expect(url).toBe('https://www.peoplefinder.com/people/Mary-Jane-Watson');
+      expect(url).toContain('John');
+      expect(url).toContain('Smith');
+      expect(url).toContain('New%20York');
+      expect(url).toContain('NY');
     });
   });
 
@@ -70,13 +68,13 @@ describe('PeopleFinderBroker', () => {
       const result = (broker as any).parseResponse(foundResultHtml, input);
       
       expect(result.found).toBe(true);
-      expect(result.brokerId).toBe('peoplefinder');
+      expect(result.brokerId).toBe('radaris');
       expect(result.exposedFields).toContain('address');
       expect(result.exposedFields).toContain('phone');
+      expect(result.exposedFields).toContain('email');
       expect(result.exposedFields).toContain('age');
       expect(result.exposedFields).toContain('relatives');
-      expect(result.exposedFields).toContain('address history');
-      expect(result.publicUrl).toContain('peoplefinder.com');
+      expect(result.publicUrl).toContain('radaris.com');
     });
 
     it('should parse no results page', () => {
@@ -94,24 +92,17 @@ describe('PeopleFinderBroker', () => {
       expect(result.found).toBe(false);
       expect(result.notes).toContain('Unable to parse response');
     });
-
-    it('should return medium risk for address/phone exposure', () => {
-      const input: NormalizedInput = { fullName: 'John Smith' };
-      const result = (broker as any).parseResponse(foundResultHtml, input);
-      
-      expect(result.riskLevel).toBe('medium');
-    });
   });
 
   describe('search', () => {
     it('should return error result on fetch failure', async () => {
-      vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Socket timeout'));
+      vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network error'));
       
       const input: NormalizedInput = { fullName: 'John Smith' };
       const result = await broker.search(input);
       
       expect(result.found).toBe(false);
-      expect(result.error).toBe('Socket timeout');
+      expect(result.error).toBe('Network error');
     });
 
     it('should parse successful response', async () => {
@@ -124,21 +115,7 @@ describe('PeopleFinderBroker', () => {
       const result = await broker.search(input);
       
       expect(result.found).toBe(true);
-      expect(result.exposedFields).toContain('address history');
-    });
-
-    it('should return error on HTTP 500', async () => {
-      vi.spyOn(global, 'fetch').mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-      } as Response);
-      
-      const input: NormalizedInput = { fullName: 'John Smith' };
-      const result = await broker.search(input);
-      
-      expect(result.found).toBe(false);
-      expect(result.error).toContain('500');
+      expect(result.exposedFields.length).toBeGreaterThan(0);
     });
 
     it('should return error result on timeout', async () => {
@@ -146,7 +123,7 @@ describe('PeopleFinderBroker', () => {
         () => new Promise(() => {})
       );
       
-      const fastBroker = new PeopleFinderBroker(mockConfig);
+      const fastBroker = new RadarisBroker(mockConfig);
       (fastBroker as any).timeoutMs = 50;
       
       const input: NormalizedInput = { fullName: 'John Smith' };

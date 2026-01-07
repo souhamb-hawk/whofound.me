@@ -43,8 +43,7 @@ describe('SpokeoBroker', () => {
       const url = (broker as any).buildSearchUrl(input);
       
       expect(url).toContain('https://www.spokeo.com/search');
-      expect(url).toContain('q=John+Smith');
-      expect(url).toContain('t=name');
+      expect(url).toContain('John-Smith');
     });
 
     it('should build URL with location', () => {
@@ -55,8 +54,8 @@ describe('SpokeoBroker', () => {
       };
       const url = (broker as any).buildSearchUrl(input);
       
-      expect(url).toContain('city=Los+Angeles');
-      expect(url).toContain('state=CA');
+      expect(url).toContain('John-Smith');
+      expect(url).toContain('Los-Angeles-CA');
     });
   });
 

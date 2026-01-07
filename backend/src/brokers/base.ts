@@ -137,7 +137,7 @@ export abstract class BaseBroker implements BrokerModule {
    * Calculate risk level based on exposed data types
    */
   protected calculateRiskLevel(exposedFields: string[]): 'low' | 'medium' | 'high' {
-    const highRiskFields = ['ssn', 'social security', 'credit', 'criminal', 'arrest'];
+    const highRiskFields = ['ssn', 'social security', 'credit', 'criminal', 'arrest', 'court'];
     const mediumRiskFields = ['phone', 'email', 'address', 'relatives', 'associates'];
 
     const hasHighRisk = exposedFields.some(field =>
